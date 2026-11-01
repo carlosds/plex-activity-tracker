@@ -1,5 +1,6 @@
 package io.github.plexactivitytracker
 
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
@@ -35,8 +36,6 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     private val helper = PreviewChannelHelper(context)
     private val prefs = Prefs(context)
 
-    private fun channels(): List<PreviewChannel> = runCatching { helper.allChannels }.getOrDefault(emptyList())
-
     /** Canales de esta app (id + id interno), leídos directamente del TvProvider. */
     private class Own(val id: Long, val providerId: String?)
 
@@ -71,8 +70,16 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
         if (current != null) {
             // Siempre: nombre, enlace y logo (el logo solo se guarda al crear el canal, así que
             // sin esto un canal ya existente se quedaría con el icono antiguo).
-            runCatching { helper.updatePreviewChannel(channelId, buildChannel(row)) }
-                .onFailure { Log.w(TAG, "updatePreviewChannel(${row.id}) falló", it) }
+            // No usamos helper.updatePreviewChannel: lanza NullPointerException con los canales
+            // creados sin descripción. Actualizamos las columnas directamente.
+            runCatching {
+                val values = ContentValues().apply {
+                    put(TvContractCompat.Channels.COLUMN_DISPLAY_NAME, row.title)
+                    put(TvContractCompat.Channels.COLUMN_DESCRIPTION, row.title)
+                    put(TvContractCompat.Channels.COLUMN_APP_LINK_INTENT_URI, SETTINGS_LINK)
+                }
+                context.contentResolver.update(TvContractCompat.buildChannelUri(channelId), values, null, null)
+            }.onFailure { Log.w(TAG, "actualizar canal ${row.id} falló", it) }
             runCatching { ChannelLogoUtils.storeChannelLogo(context, channelId, logo()) }
                 .onFailure { Log.w(TAG, "storeChannelLogo(${row.id}) falló", it) }
         }
@@ -125,7 +132,19 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     }
 
     /** Peticiones de visibilidad para launchers que solo muestran canales "browsable". */
-    fun nonBrowsableChannelIds(): List<Long> = channels().filter { !it.isBrowsable }.map { it.id }
+    fun nonBrowsableChannelIds(): List<Long> {
+        val out = mutableListOf<Long>()
+        runCatching {
+            context.contentResolver.query(
+                TvContractCompat.Channels.CONTENT_URI,
+                arrayOf(BaseColumns._ID, "browsable", TvContractCompat.Channels.COLUMN_INTERNAL_PROVIDER_ID),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext()) if (c.getInt(1) == 0 && c.getString(2) != null) out += c.getLong(0)
+            }
+        }.onFailure { Log.w(TAG, "no pude leer la visibilidad de los canales", it) }
+        return out
+    }
 
     private fun createChannel(row: Row, makeDefault: Boolean): Long {
         val ch = buildChannel(row)
@@ -135,7 +154,8 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     private fun buildChannel(row: Row): PreviewChannel =
         PreviewChannel.Builder()
             .setDisplayName(row.title)
-            .setAppLinkIntentUri(Uri.parse("plexactivitytracker://settings"))
+            .setDescription(row.title)
+            .setAppLinkIntentUri(Uri.parse(SETTINGS_LINK))
             .setInternalProviderId(row.id)
             .setLogo(logo())
             .build()
@@ -239,6 +259,7 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
 
     companion object {
         private const val TAG = "PlexTracker"
+        private const val SETTINGS_LINK = "plexactivitytracker://settings"
 
         fun openUri(item: PlexItem, continueRow: Boolean): Uri =
             Uri.parse("plexactivitytracker://open").buildUpon()
