@@ -37,10 +37,37 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
 
     private fun channels(): List<PreviewChannel> = runCatching { helper.allChannels }.getOrDefault(emptyList())
 
+    /** Canales de esta app (id + id interno), leídos directamente del TvProvider. */
+    private class Own(val id: Long, val providerId: String?)
+
+    private fun ownChannels(): List<Own> {
+        val out = mutableListOf<Own>()
+        try {
+            context.contentResolver.query(
+                TvContractCompat.Channels.CONTENT_URI,
+                arrayOf(BaseColumns._ID, TvContractCompat.Channels.COLUMN_INTERNAL_PROVIDER_ID),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext()) out += Own(c.getLong(0), c.getString(1))
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "no pude listar los canales", e)
+        }
+        return out
+    }
+
     fun publishRow(row: Row) {
-        val existing = channels()
-        val current = existing.firstOrNull { it.internalProviderId == row.id }
-        val channelId = current?.id ?: createChannel(row, makeDefault = existing.isEmpty())
+        val all = ownChannels()
+        // Si por algún motivo hay varios canales de la misma fila (versiones anteriores creaban uno
+        // nuevo en cada sincronización), se conserva el más antiguo —el que ya tendrás elegido en
+        // Projectivy— y se borran los demás.
+        val mine = all.filter { it.providerId == row.id }.sortedBy { it.id }
+        mine.drop(1).forEach { dup ->
+            runCatching { helper.deletePreviewChannel(dup.id) }
+                .onFailure { Log.w(TAG, "borrado de canal duplicado ${dup.id} falló", it) }
+        }
+        val current = mine.firstOrNull()
+        val channelId = current?.id ?: createChannel(row, makeDefault = all.isEmpty())
         if (current != null) {
             // Siempre: nombre, enlace y logo (el logo solo se guarda al crear el canal, así que
             // sin esto un canal ya existente se quedaría con el icono antiguo).
@@ -64,11 +91,15 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
                 .onSuccess { published++ }
                 .onFailure { Log.w(TAG, "publishPreviewProgram(${row.id}, ${item.ratingKey}) falló", it) }
         }
-        Log.i(TAG, "fila ${row.id}: canal=$channelId borrados=$deleted publicados=$published/$total")
+        Log.i(
+            TAG,
+            "fila ${row.id}: canal=$channelId ${if (current == null) "NUEVO" else "existente"} " +
+                "duplicados=${(mine.size - 1).coerceAtLeast(0)} borrados=$deleted publicados=$published/$total"
+        )
     }
 
     fun removeRow(rowId: String) {
-        channels().filter { it.internalProviderId == rowId }.forEach {
+        ownChannels().filter { it.providerId == rowId }.forEach {
             runCatching { helper.deletePreviewChannel(it.id) }
         }
     }
