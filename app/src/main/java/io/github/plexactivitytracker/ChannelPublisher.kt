@@ -2,10 +2,12 @@ package io.github.plexactivitytracker
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import android.net.Uri
 import android.provider.BaseColumns
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.tvprovider.media.tv.ChannelLogoUtils
 import androidx.tvprovider.media.tv.PreviewChannel
 import androidx.tvprovider.media.tv.PreviewChannelHelper
 import androidx.tvprovider.media.tv.PreviewProgram
@@ -39,19 +41,30 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
         val existing = channels()
         val current = existing.firstOrNull { it.internalProviderId == row.id }
         val channelId = current?.id ?: createChannel(row, makeDefault = existing.isEmpty())
-        if (current != null && current.displayName?.toString() != row.title) {
+        if (current != null) {
+            // Siempre: nombre, enlace y logo (el logo solo se guarda al crear el canal, así que
+            // sin esto un canal ya existente se quedaría con el icono antiguo).
             runCatching { helper.updatePreviewChannel(channelId, buildChannel(row)) }
+                .onFailure { Log.w(TAG, "updatePreviewChannel(${row.id}) falló", it) }
+            runCatching { ChannelLogoUtils.storeChannelLogo(context, channelId, logo()) }
+                .onFailure { Log.w(TAG, "storeChannelLogo(${row.id}) falló", it) }
         }
+        var deleted = 0
         deletePrograms(TvContractCompat.buildPreviewProgramsUriForChannel(channelId)) { id ->
             helper.deletePreviewProgram(id)
+            deleted++
         }
+        var published = 0
         val total = row.items.size
         row.items.forEachIndexed { index, item ->
             val b = PreviewProgram.Builder()
             b.setChannelId(channelId)
             fill(b, item, row.isContinue, weight = total - index)
             runCatching { helper.publishPreviewProgram(b.build()) }
+                .onSuccess { published++ }
+                .onFailure { Log.w(TAG, "publishPreviewProgram(${row.id}, ${item.ratingKey}) falló", it) }
         }
+        Log.i(TAG, "fila ${row.id}: canal=$channelId borrados=$deleted publicados=$published/$total")
     }
 
     fun removeRow(rowId: String) {
@@ -106,7 +119,7 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
                 while (c.moveToNext()) ids += c.getLong(0)
             }
         }
-        ids.forEach { runCatching { delete(it) } }
+        ids.forEach { runCatching { delete(it) }.onFailure { e -> Log.w(TAG, "borrado de programa $it falló", e) } }
     }
 
     /** Valores comunes de una tarjeta (los builders de canal y de Watch Next no comparten tipo público). */
@@ -194,6 +207,8 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     }
 
     companion object {
+        private const val TAG = "PlexTracker"
+
         fun openUri(item: PlexItem, continueRow: Boolean): Uri =
             Uri.parse("plexactivitytracker://open").buildUpon()
                 .appendQueryParameter("key", item.ratingKey)
