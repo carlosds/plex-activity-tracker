@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Plex Filas</string>
-    <string name="plugin_name">Plex Filas (fanart)</string>
+    <string name="app_name">Plex Activity Tracker</string>
+    <string name="plugin_name">Plex Activity Tracker (fanart)</string>
     <!-- UUID del plugin para Projectivy: no cambiar una vez instalado -->
     <string name="plugin_uuid" translatable="false">61195904-9eb8-4876-958a-d069537811db</string>
 
@@ -10,7 +10,7 @@
     <string name="row_shows">Series recientes</string>
     <string name="row_reco">Recomendado en Plex</string>
 
-    <string name="settings_title">Plex Filas</string>
+    <string name="settings_title">Plex Activity Tracker</string>
     <string name="cat_server">Servidor Plex</string>
     <string name="link_title">Vincular con mi cuenta Plex</string>
     <string name="link_summary">Muestra un código para introducir en plex.tv/link y busca tu servidor en casa</string>

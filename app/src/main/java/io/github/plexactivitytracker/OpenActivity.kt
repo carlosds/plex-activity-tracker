@@ -1,4 +1,4 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
@@ -9,7 +9,7 @@ import android.os.Bundle
 import android.widget.Toast
 
 /**
- * Las tarjetas apuntan aquí (plexfilas://open?key=…) y esta actividad, sin interfaz,
+ * Las tarjetas apuntan aquí (plexactivitytracker://open?key=…) y esta actividad, sin interfaz,
  * abre el contenido en la app de Plex según el modo elegido en ajustes.
  * Así se puede cambiar el comportamiento sin volver a publicar las filas.
  */

@@ -1,4 +1,4 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -90,7 +90,7 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     private fun buildChannel(row: Row): PreviewChannel =
         PreviewChannel.Builder()
             .setDisplayName(row.title)
-            .setAppLinkIntentUri(Uri.parse("plexfilas://settings"))
+            .setAppLinkIntentUri(Uri.parse("plexactivitytracker://settings"))
             .setInternalProviderId(row.id)
             .setLogo(logo())
             .build()
@@ -189,7 +189,7 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
 
     companion object {
         fun openUri(item: PlexItem, continueRow: Boolean): Uri =
-            Uri.parse("plexfilas://open").buildUpon()
+            Uri.parse("plexactivitytracker://open").buildUpon()
                 .appendQueryParameter("key", item.ratingKey)
                 .appendQueryParameter("type", item.type)
                 .appendQueryParameter("row", if (continueRow) "continue" else "other")

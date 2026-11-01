@@ -5,7 +5,7 @@
 
     <integer name="items_cache_duration_millis">900000</integer>
 
-    <style name="Theme.PlexFilas" parent="Theme.AppCompat.NoActionBar">
+    <style name="Theme.PlexActivityTracker" parent="Theme.AppCompat.NoActionBar">
         <item name="colorPrimary">@color/accent</item>
         <item name="colorPrimaryDark">@color/bg</item>
         <item name="colorAccent">@color/accent</item>

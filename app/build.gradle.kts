@@ -8,11 +8,11 @@ plugins {
 val keystorePath: String? = System.getenv("SIGNING_KEYSTORE")
 
 android {
-    namespace = "io.github.plexfilas"
+    namespace = "io.github.plexactivitytracker"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.github.plexfilas"
+        applicationId = "io.github.plexactivitytracker"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

@@ -41,5 +41,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: plex-filas-apk
+          name: plex-activity-tracker-apk
           path: app/build/outputs/apk/release/*.apk

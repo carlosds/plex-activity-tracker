@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PlexFilas"
+rootProject.name = "PlexActivityTracker"
 include(":app", ":api")
