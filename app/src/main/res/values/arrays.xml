@@ -13,6 +13,15 @@
         <item>30</item>
     </string-array>
 
+    <string-array name="card_image_entries">
+        <item>Carátula (vertical)</item>
+        <item>Fanart (horizontal)</item>
+    </string-array>
+    <string-array name="card_image_values">
+        <item>poster</item>
+        <item>fanart</item>
+    </string-array>
+
     <string-array name="open_entries">
         <item>Reproducir directamente</item>
         <item>Abrir la ficha en Plex</item>

@@ -40,7 +40,7 @@ data class PlexItem(
                 append(title)
             }
             "season" -> title
-            else -> year?.toString()
+            else -> null
         }
 }
 

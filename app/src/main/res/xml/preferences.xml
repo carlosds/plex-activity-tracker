@@ -47,6 +47,13 @@
             app:key="items_per_row"
             app:title="@string/items_title"
             app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="poster"
+            app:entries="@array/card_image_entries"
+            app:entryValues="@array/card_image_values"
+            app:key="card_image"
+            app:title="@string/card_image_title"
+            app:useSimpleSummaryProvider="true" />
         <Preference
             app:key="make_visible"
             app:summary="@string/visible_summary"

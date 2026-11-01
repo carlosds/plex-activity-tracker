@@ -24,6 +24,7 @@
     <string name="watch_next_title">Publicar también en Watch Next</string>
     <string name="watch_next_summary">La fila de sistema \"Continuar viendo\", con barra de progreso</string>
     <string name="items_title">Elementos por fila</string>
+    <string name="card_image_title">Imagen de las tarjetas (excepto Continuar viendo)</string>
     <string name="visible_title">Hacer visibles las filas</string>
     <string name="visible_summary">Úsalo si Projectivy no te ofrece alguna fila</string>
 

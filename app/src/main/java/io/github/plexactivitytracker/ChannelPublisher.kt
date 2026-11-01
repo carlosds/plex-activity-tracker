@@ -31,6 +31,7 @@ data class Row(val id: String, val title: String, val enabled: Boolean, val item
 class ChannelPublisher(private val context: Context, private val client: PlexClient) {
 
     private val helper = PreviewChannelHelper(context)
+    private val prefs = Prefs(context)
 
     private fun channels(): List<PreviewChannel> = runCatching { helper.allChannels }.getOrDefault(emptyList())
 
@@ -117,7 +118,12 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     )
 
     private fun card(item: PlexItem, continueRow: Boolean): Card {
-        val desc = listOfNotNull(item.cardSubtitle, item.summary).joinToString("\n").ifBlank { null }
+        // "Continuar viendo": solo título y duración (sin año ni descripción).
+        // Resto de filas: el año va solo en releaseDate (el launcher ya lo muestra) y no en la descripción.
+        val desc = if (continueRow) null
+        else listOfNotNull(item.cardSubtitle, item.summary).joinToString("\n").ifBlank { null }
+        // En filas normales se puede elegir carátula (vertical) o fanart (horizontal).
+        val posterOnly = !continueRow && prefs.cardImage == "poster"
         return Card(
             type = when (item.type) {
                 "movie" -> TvContractCompat.PreviewProgramColumns.TYPE_MOVIE
@@ -130,9 +136,9 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
             episodeTitle = item.title.takeIf { item.type == "episode" },
             season = item.season.takeIf { item.type == "episode" },
             episode = item.episode.takeIf { item.type == "episode" },
-            releaseDate = item.year?.toString(),
+            releaseDate = if (continueRow) null else item.year?.toString(),
             poster = client.imageUrl(item.posterPath, 400, 600)?.let(Uri::parse),
-            thumb = client.imageUrl(item.stillPath, 640, 360)?.let(Uri::parse),
+            thumb = if (posterOnly) null else client.imageUrl(item.stillPath, 640, 360)?.let(Uri::parse),
             durationMs = item.durationMs?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt(),
             positionMs = if (continueRow) item.viewOffsetMs?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt() else null,
             intent = openUri(item, continueRow),
