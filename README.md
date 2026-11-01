@@ -19,15 +19,15 @@ La app no tiene interfaz más allá de los ajustes. Se actualiza sola cada 15 mi
 ### Opción B — Android Studio
 Abre la carpeta y ejecuta *Build → Build APK(s)*.
 
-### Firma propia (recomendado si vas a ir actualizando)
-Sin ella, cada compilación de GitHub usa una clave distinta y Android no deja actualizar encima: tendrías que desinstalar antes (y volver a configurar). Para evitarlo, crea una clave una vez:
+### Firma propia (necesaria para actualizar sin desinstalar)
+Sin ella, cada compilación de GitHub usa una clave de depuración distinta y Android no deja actualizar encima: tendrías que desinstalar antes (y volver a configurar). Se crea una sola vez, en tu ordenador:
 
 ```bash
-keytool -genkeypair -v -keystore plexactivitytracker.jks -alias plexactivitytracker -keyalg RSA -keysize 2048 -validity 10000
-base64 -w0 plexactivitytracker.jks   # en macOS: base64 -i plexactivitytracker.jks
+scripts/create-signing-key.sh --upload   # con `gh` autenticado: sube los 4 secretos al repo
+scripts/create-signing-key.sh            # sin `gh`: te muestra los valores para pegarlos a mano
 ```
 
-Añade en el repo (*Settings → Secrets and variables → Actions*): `KEYSTORE_BASE64` (la salida del base64), `KEYSTORE_PASSWORD`, `KEY_ALIAS` (`plexactivitytracker`) y `KEY_PASSWORD`. No subas el `.jks` al repo.
+Los secretos (*Settings → Secrets and variables → Actions*) son `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` (`plexactivitytracker`) y `KEY_PASSWORD`. Guarda el `.jks` generado y su contraseña en un lugar seguro (no lo subas al repo; está en `.gitignore`): si lo pierdes, tendrás que desinstalar una vez más. El `versionCode` sube solo con cada ejecución de la Action.
 
 ## 2. Instalar en la tele
 

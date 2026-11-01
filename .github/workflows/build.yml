@@ -31,6 +31,8 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "SIGNING_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin KEYSTORE_BASE64: se firma con la clave de depuración y no se podrá actualizar sobre una versión anterior sin desinstalar."
           fi
 
       - name: Compilar
