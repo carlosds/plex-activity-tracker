@@ -13,7 +13,7 @@ La app no tiene interfaz más allá de los ajustes. Se actualiza sola cada 15 mi
 
 ### Opción A — GitHub Actions (sin instalar nada)
 1. Crea un repositorio en GitHub (puede ser privado) y sube esta carpeta tal cual.
-2. En la pestaña **Actions**, el flujo *Compilar APK* se lanza solo al hacer push a `main` (o con *Run workflow*).
+2. En la pestaña **Actions**, el flujo *Compilar APK* se lanza solo al hacer push a cualquier rama, en pull requests (o con *Run workflow*).
 3. Al terminar (unos 5 min), descarga el artefacto **plex-activity-tracker-apk** (un zip con `app-release.apk`).
 
 ### Opción B — Android Studio
