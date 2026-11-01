@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="items_entries">
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>30</item>
+    </string-array>
+    <string-array name="items_values">
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>30</item>
+    </string-array>
+
+    <string-array name="open_entries">
+        <item>Reproducir directamente</item>
+        <item>Abrir la ficha en Plex</item>
+        <item>Solo abrir la app de Plex</item>
+    </string-array>
+    <string-array name="open_values">
+        <item>play</item>
+        <item>preplay</item>
+        <item>app</item>
+    </string-array>
+
+    <string-array name="interval_entries">
+        <item>15 minutos</item>
+        <item>30 minutos</item>
+        <item>1 hora</item>
+    </string-array>
+    <string-array name="interval_values">
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+
+    <string-array name="wp_source_entries">
+        <item>Todo lo de mis filas</item>
+        <item>Solo lo que estoy viendo</item>
+        <item>Solo lo recién añadido</item>
+    </string-array>
+    <string-array name="wp_source_values">
+        <item>all</item>
+        <item>continue</item>
+        <item>recent</item>
+    </string-array>
+</resources>

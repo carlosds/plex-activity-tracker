@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Plex Filas</string>
+    <string name="plugin_name">Plex Filas (fanart)</string>
+    <!-- UUID del plugin para Projectivy: no cambiar una vez instalado -->
+    <string name="plugin_uuid" translatable="false">61195904-9eb8-4876-958a-d069537811db</string>
+
+    <string name="row_continue">Continuar viendo</string>
+    <string name="row_movies">Películas recientes</string>
+    <string name="row_shows">Series recientes</string>
+    <string name="row_reco">Recomendado en Plex</string>
+
+    <string name="settings_title">Plex Filas</string>
+    <string name="cat_server">Servidor Plex</string>
+    <string name="link_title">Vincular con mi cuenta Plex</string>
+    <string name="link_summary">Muestra un código para introducir en plex.tv/link y busca tu servidor en casa</string>
+    <string name="url_title">URL del servidor</string>
+    <string name="token_title">Token (X-Plex-Token)</string>
+    <string name="token_empty">Sin configurar</string>
+    <string name="token_set">Configurado (oculto)</string>
+    <string name="test_title">Probar conexión</string>
+
+    <string name="cat_rows">Filas</string>
+    <string name="watch_next_title">Publicar también en Watch Next</string>
+    <string name="watch_next_summary">La fila de sistema \"Continuar viendo\", con barra de progreso</string>
+    <string name="items_title">Elementos por fila</string>
+    <string name="visible_title">Hacer visibles las filas</string>
+    <string name="visible_summary">Úsalo si Projectivy no te ofrece alguna fila</string>
+
+    <string name="cat_open">Al pulsar una tarjeta</string>
+    <string name="open_continue_title">En \"Continuar viendo\"</string>
+    <string name="open_other_title">En el resto de filas</string>
+
+    <string name="cat_update">Actualización</string>
+    <string name="interval_title">Actualizar cada</string>
+    <string name="sync_title">Actualizar ahora</string>
+
+    <string name="cat_wallpaper">Fondo de pantalla (Projectivy Premium)</string>
+    <string name="wp_focus_title">Fanart de la tarjeta enfocada</string>
+    <string name="wp_focus_summary">Al moverte por estas filas, el fondo muestra el título seleccionado</string>
+    <string name="wp_source_title">Fondos que rotan</string>
+
+    <string name="never_synced">Aún no se ha sincronizado</string>
+    <string name="missing_config">Falta la URL del servidor o el token</string>
+    <string name="testing">Probando…</string>
+    <string name="syncing">Actualizando…</string>
+    <string name="sync_ok">Filas actualizadas: %1$s</string>
+    <string name="all_visible">Todas las filas ya son visibles</string>
+    <string name="visible_requested">Pedida visibilidad para %1$d filas</string>
+    <string name="plex_not_found">No encuentro la app de Plex instalada</string>
+
+    <string name="link_instructions">En el móvil o el ordenador, entra en plex.tv/link e introduce este código:</string>
+    <string name="link_requesting">Pidiendo código a Plex…</string>
+    <string name="link_waiting">Esperando a que introduzcas el código…</string>
+    <string name="link_expired">El código ha caducado. Vuelve atrás e inténtalo de nuevo.</string>
+    <string name="link_searching">Cuenta vinculada. Buscando tu servidor en la red…</string>
+    <string name="link_no_servers">La cuenta no tiene servidores Plex accesibles.</string>
+    <string name="link_no_connection">No pude conectar con %1$s desde la tele. El token ya está guardado: escribe la URL del servidor a mano en ajustes.</string>
+    <string name="link_connected">Conectado a %1$s (%2$s). Creando las filas…</string>
+    <string name="link_done">Listo: %1$s</string>
+</resources>

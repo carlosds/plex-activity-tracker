@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/cat_server">
+        <Preference
+            app:key="link"
+            app:summary="@string/link_summary"
+            app:title="@string/link_title" />
+        <EditTextPreference
+            app:key="server_url"
+            app:title="@string/url_title"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:key="token"
+            app:title="@string/token_title" />
+        <Preference
+            app:key="test"
+            app:title="@string/test_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_rows">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="row_continue"
+            app:title="@string/row_continue" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="row_movies"
+            app:title="@string/row_movies" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="row_shows"
+            app:title="@string/row_shows" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="row_reco"
+            app:title="@string/row_reco" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="watch_next"
+            app:summary="@string/watch_next_summary"
+            app:title="@string/watch_next_title" />
+        <ListPreference
+            app:defaultValue="20"
+            app:entries="@array/items_entries"
+            app:entryValues="@array/items_values"
+            app:key="items_per_row"
+            app:title="@string/items_title"
+            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:key="make_visible"
+            app:summary="@string/visible_summary"
+            app:title="@string/visible_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_open">
+        <ListPreference
+            app:defaultValue="play"
+            app:entries="@array/open_entries"
+            app:entryValues="@array/open_values"
+            app:key="open_continue"
+            app:title="@string/open_continue_title"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="preplay"
+            app:entries="@array/open_entries"
+            app:entryValues="@array/open_values"
+            app:key="open_other"
+            app:title="@string/open_other_title"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_update">
+        <ListPreference
+            app:defaultValue="15"
+            app:entries="@array/interval_entries"
+            app:entryValues="@array/interval_values"
+            app:key="interval"
+            app:title="@string/interval_title"
+            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:key="sync_now"
+            app:title="@string/sync_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_wallpaper">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="wp_focus"
+            app:summary="@string/wp_focus_summary"
+            app:title="@string/wp_focus_title" />
+        <ListPreference
+            app:defaultValue="all"
+            app:entries="@array/wp_source_entries"
+            app:entryValues="@array/wp_source_values"
+            app:key="wp_source"
+            app:title="@string/wp_source_title"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

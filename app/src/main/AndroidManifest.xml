@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!-- Visibilidad de paquetes (Android 11+): app de Plex y Projectivy -->
+    <queries>
+        <package android:name="com.plexapp.android" />
+        <package android:name="com.spocky.projengmenu" />
+    </queries>
+
+    <application
+        android:name=".App"
+        android:allowBackup="false"
+        android:banner="@drawable/banner"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PlexFilas"
+        android:usesCleartextTraffic="true"
+        tools:ignore="UnusedAttribute">
+
+        <!-- Ajustes. También es el "app link" de las filas publicadas. -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="settings"
+                    android:scheme="plexfilas" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".LinkActivity"
+            android:exported="false" />
+
+        <!-- Recibe la pulsación de una tarjeta y abre el contenido en la app de Plex -->
+        <activity
+            android:name=".OpenActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="open"
+                    android:scheme="plexfilas" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".SyncTriggerReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.media.tv.action.INITIALIZE_PROGRAMS" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Plugin de fondo de pantalla para Projectivy (requiere Projectivy Premium) -->
+        <service
+            android:name=".WallpaperProviderService"
+            android:banner="@drawable/banner"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/plugin_name"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="tv.projectivy.plugin.WALLPAPER_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="apiVersion"
+                android:value="1" />
+            <meta-data
+                android:name="uuid"
+                android:value="@string/plugin_uuid" />
+            <meta-data
+                android:name="name"
+                android:value="@string/plugin_name" />
+            <meta-data
+                android:name="settingsActivity"
+                android:value=".SettingsActivity" />
+            <meta-data
+                android:name="itemsCacheDurationMillis"
+                android:value="@integer/items_cache_duration_millis" />
+            <!-- 1 = cada X minutos, 8 = tarjeta de programa enfocada -->
+            <meta-data
+                android:name="updateMode"
+                android:value="9" />
+        </service>
+
+    </application>
+
+</manifest>
