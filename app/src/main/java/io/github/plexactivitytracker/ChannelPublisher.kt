@@ -81,6 +81,7 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
                 context.contentResolver.update(TvContractCompat.buildChannelUri(channelId), values, null, null)
             }.onFailure { Log.w(TAG, "actualizar canal ${row.id} falló", it) }
             runCatching { ChannelLogoUtils.storeChannelLogo(context, channelId, logo()) }
+                .onSuccess { if (!it) Log.w(TAG, "storeChannelLogo(${row.id}) devolvió false") }
                 .onFailure { Log.w(TAG, "storeChannelLogo(${row.id}) falló", it) }
         }
         var deleted = 0
