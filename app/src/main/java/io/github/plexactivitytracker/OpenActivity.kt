@@ -25,7 +25,8 @@ class OpenActivity : Activity() {
             this,
             key = data?.getQueryParameter("key"),
             type = data?.getQueryParameter("type"),
-            continueRow = data?.getQueryParameter("row") == "continue"
+            continueRow = data?.getQueryParameter("row") == "continue",
+            offsetSec = data?.getQueryParameter("pos")?.toLongOrNull() ?: 0L
         )
         finish()
     }
@@ -39,7 +40,8 @@ class OpenActivity : Activity() {
  *    alias (.MainActivityDefault u otro, según el icono elegido en Plex). Hay que mandar el intent
  *    explícito a ese alias.
  *  - Funciona: plex://watch/video?uri=server://<machineId>/com.plexapp.plugins.library/library/metadata/<id>
- *    (reproduce desde el principio, sin ofrecer reanudar).
+ *    Acepta &offset=<segundos> para empezar en ese punto (así se reanuda; viewOffset y t no
+ *    funcionan, y offset en milisegundos se interpreta como segundos y salta al final).
  *  - No funcionan: plex://play, plex://preplay ni plex://movie/<guid> (ficha).
  *  - Con Plex cerrado el enlace falla ("No se pudo conectar con el servidor"): Plex aún no ha
  *    encontrado el servidor. Por eso primero se abre Plex y el enlace se envía tras una espera.
@@ -48,7 +50,7 @@ object PlexLauncher {
     const val PLEX_PKG = "com.plexapp.android"
     private const val TAG = "PlexTracker"
 
-    fun open(context: Context, key: String?, type: String?, continueRow: Boolean) {
+    fun open(context: Context, key: String?, type: String?, continueRow: Boolean, offsetSec: Long = 0L) {
         val prefs = Prefs(context)
         val mode = if (continueRow) prefs.openContinue else prefs.openOther
         val server = prefs.machineId
@@ -69,6 +71,7 @@ object PlexLauncher {
 
         val uri = Uri.parse("plex://watch/video").buildUpon()
             .appendQueryParameter("uri", "server://$server/com.plexapp.plugins.library/library/metadata/$key")
+            .apply { if (offsetSec > 0) appendQueryParameter("offset", offsetSec.toString()) }
             .build()
         val deepLink = Intent(Intent.ACTION_VIEW, uri).setComponent(launch.component)
 

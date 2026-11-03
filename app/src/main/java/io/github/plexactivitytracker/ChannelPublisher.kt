@@ -267,6 +267,11 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
                 .appendQueryParameter("key", item.ratingKey)
                 .appendQueryParameter("type", item.type)
                 .appendQueryParameter("row", if (continueRow) "continue" else "other")
+                .apply {
+                    // Posición guardada en Plex (en segundos) para reanudar donde se dejó
+                    val sec = (item.viewOffsetMs ?: 0L) / 1000
+                    if (sec > 0) appendQueryParameter("pos", sec.toString())
+                }
                 .build()
     }
 }
