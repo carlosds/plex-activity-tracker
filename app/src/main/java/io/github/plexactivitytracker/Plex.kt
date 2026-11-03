@@ -137,6 +137,10 @@ class PlexClient(
         return parseItems(container("/library/onDeck", page(limit))).take(limit)
     }
 
+    /** Posición actual (ms) de un ítem; 0 si no está empezado o ya se terminó. */
+    fun viewOffsetMs(ratingKey: String): Long =
+        parseItems(container("/library/metadata/$ratingKey")).firstOrNull()?.viewOffsetMs ?: 0L
+
     fun recentlyAdded(section: Section, limit: Int): List<PlexItem> =
         parseItems(container("/library/sections/${section.key}/recentlyAdded", page(limit))).take(limit)
 

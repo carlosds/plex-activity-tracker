@@ -2,15 +2,16 @@ package io.github.plexactivitytracker
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.widget.Toast
+import kotlin.concurrent.thread
 
 /**
  * Las tarjetas apuntan aquí (plexactivitytracker://open?key=…) y esta actividad, sin interfaz,
@@ -26,7 +27,7 @@ class OpenActivity : Activity() {
             key = data?.getQueryParameter("key"),
             type = data?.getQueryParameter("type"),
             continueRow = data?.getQueryParameter("row") == "continue",
-            offsetSec = data?.getQueryParameter("pos")?.toLongOrNull() ?: 0L
+            fallbackOffsetSec = data?.getQueryParameter("pos")?.toLongOrNull() ?: 0L
         )
         finish()
     }
@@ -40,6 +41,7 @@ class OpenActivity : Activity() {
  *    alias (.MainActivityDefault u otro, según el icono elegido en Plex). Hay que mandar el intent
  *    explícito a ese alias.
  *  - Funciona: plex://watch/video?uri=server://<machineId>/com.plexapp.plugins.library/library/metadata/<id>
+ *    Al pulsar se pide a Plex la posición actual del ítem (con la de la sincronización como reserva).
  *    Acepta &offset=<segundos> para empezar en ese punto (así se reanuda; viewOffset y t no
  *    funcionan, y offset en milisegundos se interpreta como segundos y salta al final).
  *  - No funcionan: plex://play, plex://preplay ni plex://movie/<guid> (ficha).
@@ -50,7 +52,7 @@ object PlexLauncher {
     const val PLEX_PKG = "com.plexapp.android"
     private const val TAG = "PlexTracker"
 
-    fun open(context: Context, key: String?, type: String?, continueRow: Boolean, offsetSec: Long = 0L) {
+    fun open(context: Context, key: String?, type: String?, continueRow: Boolean, fallbackOffsetSec: Long = 0L) {
         val prefs = Prefs(context)
         val mode = if (continueRow) prefs.openContinue else prefs.openOther
         val server = prefs.machineId
@@ -69,24 +71,30 @@ object PlexLauncher {
             return
         }
 
-        val uri = Uri.parse("plex://watch/video").buildUpon()
-            .appendQueryParameter("uri", "server://$server/com.plexapp.plugins.library/library/metadata/$key")
-            .apply { if (offsetSec > 0) appendQueryParameter("offset", offsetSec.toString()) }
-            .build()
-        val deepLink = Intent(Intent.ACTION_VIEW, uri).setComponent(launch.component)
-
         val delayMs = prefs.plexDelaySeconds * 1000L
-        if (delayMs <= 0) {
-            if (!tryStart(context, deepLink)) tryStart(context, launch)
-            return
+        // Si hay espera, Plex se abre ya para que vaya arrancando mientras se consulta la posición.
+        if (delayMs > 0) tryStart(context, launch)
+
+        val start = SystemClock.elapsedRealtime()
+        val main = Handler(Looper.getMainLooper())
+        val client = PlexClient(prefs.serverUrl, prefs.token, prefs.clientId, timeoutMs = 2500)
+        thread(name = "plex-open") {
+            // Posición en este momento; si el servidor no responde, la de la última sincronización.
+            val offset = runCatching { client.viewOffsetMs(key) / 1000 }
+                .onFailure { Log.w(TAG, "no pude consultar la posición de $key; uso la guardada", it) }
+                .getOrDefault(fallbackOffsetSec)
+            val uri = Uri.parse("plex://watch/video").buildUpon()
+                .appendQueryParameter("uri", "server://$server/com.plexapp.plugins.library/library/metadata/$key")
+                .apply { if (offset > 0) appendQueryParameter("offset", offset.toString()) }
+                .build()
+            val deepLink = Intent(Intent.ACTION_VIEW, uri).setComponent(launch.component)
+            // Android permite lanzar actividades unos segundos después de haber lanzado otra,
+            // así que la espera total debe quedarse por debajo de ~10 s.
+            val wait = (delayMs - (SystemClock.elapsedRealtime() - start)).coerceAtLeast(0)
+            main.postDelayed({
+                if (!tryStart(app, deepLink) && delayMs <= 0) tryStart(app, launch)
+            }, wait)
         }
-        // Primero Plex (para que arranque y encuentre el servidor) y luego el enlace.
-        // Android permite lanzar actividades unos segundos después de haber lanzado otra,
-        // así que la espera debe quedarse por debajo de ~10 s.
-        tryStart(context, launch)
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (!tryStart(app, deepLink)) Log.w(TAG, "no pude enviar el enlace a Plex: $uri")
-        }, delayMs)
     }
 
     /** Alias activo que abre Plex desde el launcher (cambia según el icono elegido en Plex). */
