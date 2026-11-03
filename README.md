@@ -57,7 +57,12 @@ Para *Continuar viendo* tienes dos opciones: el canal propio o la categoría *Wa
 
 ## Al pulsar una tarjeta
 
-La app abre Plex mediante enlaces `plex://play` / `plex://preplay`. Plex no documenta estos enlaces en Android, así que en *Al pulsar una tarjeta* puedes elegir entre reproducir, abrir la ficha o solo abrir la app. Prueba qué funciona en tu tele; el cambio se aplica al momento.
+Plex no documenta sus enlaces en Android TV. Lo que funciona con la app actual de Plex para TV es `plex://watch/video?uri=server://<servidor>/com.plexapp.plugins.library/library/metadata/<id>`, enviado a su actividad de inicio. Ese enlace:
+
+- Reproduce películas y episodios **desde el principio** (no ofrece reanudar). Series y temporadas solo abren Plex: no hay enlace que lleve a su ficha.
+- Falla si Plex estaba cerrado, porque aún no ha encontrado el servidor. Por eso la app abre primero Plex y envía el enlace tras unos segundos (*Esperar a que Plex arranque*, por defecto 5 s). Si dejas Plex siempre abierto puedes ponerlo en *Sin espera*.
+
+En *Al pulsar una tarjeta* puedes elegir, para cada tipo de fila, entre reproducir o solo abrir la app.
 
 ## Notas
 

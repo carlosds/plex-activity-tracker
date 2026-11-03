@@ -31,6 +31,7 @@
     <string name="cat_open">Al pulsar una tarjeta</string>
     <string name="open_continue_title">En \"Continuar viendo\"</string>
     <string name="open_other_title">En el resto de filas</string>
+    <string name="plex_delay_title">Esperar a que Plex arranque antes de reproducir</string>
 
     <string name="cat_update">Actualización</string>
     <string name="interval_title">Actualizar cada</string>

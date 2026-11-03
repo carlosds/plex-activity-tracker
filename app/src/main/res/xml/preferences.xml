@@ -69,11 +69,18 @@
             app:title="@string/open_continue_title"
             app:useSimpleSummaryProvider="true" />
         <ListPreference
-            app:defaultValue="preplay"
+            app:defaultValue="play"
             app:entries="@array/open_entries"
             app:entryValues="@array/open_values"
             app:key="open_other"
             app:title="@string/open_other_title"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="5"
+            app:entries="@array/plex_delay_entries"
+            app:entryValues="@array/plex_delay_values"
+            app:key="plex_delay"
+            app:title="@string/plex_delay_title"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 

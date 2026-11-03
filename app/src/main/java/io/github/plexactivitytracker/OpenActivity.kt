@@ -3,11 +3,13 @@ package io.github.plexactivitytracker
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
-import android.content.pm.PackageManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 
 /**
@@ -29,53 +31,73 @@ class OpenActivity : Activity() {
     }
 }
 
+/**
+ * Apertura de contenido en Plex para Android TV (la app nueva, tv.plex.app).
+ *
+ * Lo comprobado en una Bravia con Google TV:
+ *  - El filtro plex:// está en tv.plex.app.MainActivity, que está deshabilitada; solo hay activo un
+ *    alias (.MainActivityDefault u otro, según el icono elegido en Plex). Hay que mandar el intent
+ *    explícito a ese alias.
+ *  - Funciona: plex://watch/video?uri=server://<machineId>/com.plexapp.plugins.library/library/metadata/<id>
+ *    (reproduce desde el principio, sin ofrecer reanudar).
+ *  - No funcionan: plex://play, plex://preplay ni plex://movie/<guid> (ficha).
+ *  - Con Plex cerrado el enlace falla ("No se pudo conectar con el servidor"): Plex aún no ha
+ *    encontrado el servidor. Por eso primero se abre Plex y el enlace se envía tras una espera.
+ */
 object PlexLauncher {
     const val PLEX_PKG = "com.plexapp.android"
+    private const val TAG = "PlexTracker"
 
     fun open(context: Context, key: String?, type: String?, continueRow: Boolean) {
         val prefs = Prefs(context)
         val mode = if (continueRow) prefs.openContinue else prefs.openOther
         val server = prefs.machineId
+        val app = context.applicationContext
 
-        if (!key.isNullOrBlank() && server.isNotBlank() && mode != "app") {
-            // "play" solo tiene sentido en películas y episodios; series y temporadas van a su ficha
-            val action = if (mode == "play" && (type == "movie" || type == "episode")) "play" else "preplay"
-            val typeCode = when (type) {
-                "movie" -> 1; "show" -> 2; "season" -> 3; "episode" -> 4; else -> 1
-            }
-            val uri = Uri.parse(
-                "plex://$action/?metadataKey=${Uri.encode("/library/metadata/$key")}" +
-                    "&metadataType=$typeCode&server=$server"
-            )
-            // 1) Plex para TV declara el filtro plex:// en tv.plex.app.MainActivity, pero esa actividad
-            //    está deshabilitada: solo está activo un alias (.MainActivityDefault u otro, según el
-            //    icono elegido en Plex). Un intent explícito al alias llega a MainActivity con la URL.
-            launcherComponent(context)?.let { alias ->
-                if (tryStart(context, Intent(Intent.ACTION_VIEW, uri).setComponent(alias))) return
-            }
-            // 2) Resolución implícita (por si otra versión de Plex sí la admite)
-            if (tryStart(context, Intent(Intent.ACTION_VIEW, uri).setPackage(PLEX_PKG))) return
-        }
-
-        val pm = context.packageManager
-        val launch = pm.getLeanbackLaunchIntentForPackage(PLEX_PKG) ?: pm.getLaunchIntentForPackage(PLEX_PKG)
-        if (launch == null || !tryStart(context, launch)) {
+        val launch = launcherIntent(app)
+        if (launch == null) {
             Toast.makeText(context, R.string.plex_not_found, Toast.LENGTH_LONG).show()
+            return
         }
+
+        // Solo películas y episodios se pueden reproducir; series y temporadas abren Plex.
+        val playable = type == "movie" || type == "episode"
+        if (mode != "play" || !playable || key.isNullOrBlank() || server.isBlank()) {
+            tryStart(context, launch)
+            return
+        }
+
+        val uri = Uri.parse("plex://watch/video").buildUpon()
+            .appendQueryParameter("uri", "server://$server/com.plexapp.plugins.library/library/metadata/$key")
+            .build()
+        val deepLink = Intent(Intent.ACTION_VIEW, uri).setComponent(launch.component)
+
+        val delayMs = prefs.plexDelaySeconds * 1000L
+        if (delayMs <= 0) {
+            if (!tryStart(context, deepLink)) tryStart(context, launch)
+            return
+        }
+        // Primero Plex (para que arranque y encuentre el servidor) y luego el enlace.
+        // Android permite lanzar actividades unos segundos después de haber lanzado otra,
+        // así que la espera debe quedarse por debajo de ~10 s.
+        tryStart(context, launch)
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!tryStart(app, deepLink)) Log.w(TAG, "no pude enviar el enlace a Plex: $uri")
+        }, delayMs)
     }
 
     /** Alias activo que abre Plex desde el launcher (cambia según el icono elegido en Plex). */
-    private fun launcherComponent(context: Context): ComponentName? {
-        val pm: PackageManager = context.packageManager
-        return (pm.getLeanbackLaunchIntentForPackage(PLEX_PKG) ?: pm.getLaunchIntentForPackage(PLEX_PKG))?.component
+    private fun launcherIntent(context: Context): Intent? {
+        val pm = context.packageManager
+        return pm.getLeanbackLaunchIntentForPackage(PLEX_PKG) ?: pm.getLaunchIntentForPackage(PLEX_PKG)
     }
 
     private fun tryStart(context: Context, intent: Intent): Boolean = try {
-        context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        context.startActivity(Intent(intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         true
     } catch (e: ActivityNotFoundException) {
-        false
+        Log.w(TAG, "no se pudo abrir $intent", e); false
     } catch (e: SecurityException) {
-        false
+        Log.w(TAG, "no se pudo abrir $intent", e); false
     }
 }
