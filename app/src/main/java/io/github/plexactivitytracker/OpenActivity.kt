@@ -2,6 +2,7 @@ package io.github.plexactivitytracker
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -29,6 +30,7 @@ class OpenActivity : Activity() {
 
 object PlexLauncher {
     const val PLEX_PKG = "com.plexapp.android"
+    private const val PLEX_TV_ACTIVITY = "tv.plex.app.MainActivity"
 
     fun open(context: Context, key: String?, type: String?, continueRow: Boolean) {
         val prefs = Prefs(context)
@@ -45,6 +47,11 @@ object PlexLauncher {
                 "plex://$action/?metadataKey=${Uri.encode("/library/metadata/$key")}" +
                     "&metadataType=$typeCode&server=$server"
             )
+            // 1) Directo a la actividad de Plex para TV: su filtro plex:// no declara la categoría
+            //    DEFAULT, así que la resolución implícita no la encuentra.
+            val explicit = Intent(Intent.ACTION_VIEW, uri).setComponent(ComponentName(PLEX_PKG, PLEX_TV_ACTIVITY))
+            if (tryStart(context, explicit)) return
+            // 2) Resolución implícita (por si otra versión de Plex sí la admite)
             if (tryStart(context, Intent(Intent.ACTION_VIEW, uri).setPackage(PLEX_PKG))) return
         }
 
