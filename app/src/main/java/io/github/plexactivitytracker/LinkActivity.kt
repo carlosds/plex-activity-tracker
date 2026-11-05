@@ -1,4 +1,4 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
 import android.os.Bundle
 import android.util.TypedValue

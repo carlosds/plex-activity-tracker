@@ -1,4 +1,4 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
 import android.net.Uri
 import android.os.Build
@@ -40,7 +40,7 @@ data class PlexItem(
                 append(title)
             }
             "season" -> title
-            else -> year?.toString()
+            else -> null
         }
 }
 
@@ -65,12 +65,12 @@ object PlexHttp {
             conn.connectTimeout = timeoutMs
             conn.readTimeout = timeoutMs
             conn.setRequestProperty("Accept", "application/json")
-            conn.setRequestProperty("X-Plex-Product", "Plex Filas")
+            conn.setRequestProperty("X-Plex-Product", "Plex Activity Tracker")
             conn.setRequestProperty("X-Plex-Version", BuildConfig.VERSION_NAME)
             conn.setRequestProperty("X-Plex-Client-Identifier", clientId)
             conn.setRequestProperty("X-Plex-Platform", "Android")
             conn.setRequestProperty("X-Plex-Device", "Android TV")
-            conn.setRequestProperty("X-Plex-Device-Name", "Plex Filas (${Build.MODEL})")
+            conn.setRequestProperty("X-Plex-Device-Name", "Plex Activity Tracker (${Build.MODEL})")
             if (!token.isNullOrBlank()) conn.setRequestProperty("X-Plex-Token", token)
             if (method == "POST") {
                 conn.doOutput = true
@@ -136,6 +136,10 @@ class PlexClient(
         if (!hub.isNullOrEmpty()) return hub.take(limit)
         return parseItems(container("/library/onDeck", page(limit))).take(limit)
     }
+
+    /** Posición actual (ms) de un ítem; 0 si no está empezado o ya se terminó. */
+    fun viewOffsetMs(ratingKey: String): Long =
+        parseItems(container("/library/metadata/$ratingKey")).firstOrNull()?.viewOffsetMs ?: 0L
 
     fun recentlyAdded(section: Section, limit: Int): List<PlexItem> =
         parseItems(container("/library/sections/${section.key}/recentlyAdded", page(limit))).take(limit)

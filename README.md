@@ -1,4 +1,4 @@
-# Plex Filas
+# Plex Activity Tracker
 
 App para Android TV / Google TV que publica filas de tu servidor Plex como canales de la pantalla de inicio, para usarlas en **Projectivy Launcher**:
 
@@ -13,21 +13,21 @@ La app no tiene interfaz más allá de los ajustes. Se actualiza sola cada 15 mi
 
 ### Opción A — GitHub Actions (sin instalar nada)
 1. Crea un repositorio en GitHub (puede ser privado) y sube esta carpeta tal cual.
-2. En la pestaña **Actions**, el flujo *Compilar APK* se lanza solo al hacer push a `main` (o con *Run workflow*).
-3. Al terminar (unos 5 min), descarga el artefacto **plex-filas-apk** (un zip con `app-release.apk`).
+2. En la pestaña **Actions**, el flujo *Compilar APK* se lanza solo al hacer push a cualquier rama (o con *Run workflow*).
+3. Al terminar (unos 5 min), descarga el artefacto **plex-activity-tracker-apk** (un zip con `app-release.apk`).
 
 ### Opción B — Android Studio
 Abre la carpeta y ejecuta *Build → Build APK(s)*.
 
-### Firma propia (recomendado si vas a ir actualizando)
-Sin ella, cada compilación de GitHub usa una clave distinta y Android no deja actualizar encima: tendrías que desinstalar antes (y volver a configurar). Para evitarlo, crea una clave una vez:
+### Firma propia (necesaria para actualizar sin desinstalar)
+Sin ella, cada compilación de GitHub usa una clave de depuración distinta y Android no deja actualizar encima: tendrías que desinstalar antes (y volver a configurar). Se crea una sola vez, en tu ordenador:
 
 ```bash
-keytool -genkeypair -v -keystore plexfilas.jks -alias plexfilas -keyalg RSA -keysize 2048 -validity 10000
-base64 -w0 plexfilas.jks   # en macOS: base64 -i plexfilas.jks
+scripts/create-signing-key.sh --upload   # con `gh` autenticado: sube los 4 secretos al repo
+scripts/create-signing-key.sh            # sin `gh`: te muestra los valores para pegarlos a mano
 ```
 
-Añade en el repo (*Settings → Secrets and variables → Actions*): `KEYSTORE_BASE64` (la salida del base64), `KEYSTORE_PASSWORD`, `KEY_ALIAS` (`plexfilas`) y `KEY_PASSWORD`. No subas el `.jks` al repo.
+Los secretos (*Settings → Secrets and variables → Actions*) son `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` (`plexactivitytracker`) y `KEY_PASSWORD`. Guarda el `.jks` generado y su contraseña en un lugar seguro (no lo subas al repo; está en `.gitignore`): si lo pierdes, tendrás que desinstalar una vez más. El `versionCode` sube solo con cada ejecución de la Action.
 
 ## 2. Instalar en la tele
 
@@ -42,22 +42,27 @@ También vale con *Send Files to TV* + un gestor de archivos, o con Downloader.
 
 ## 3. Configurar
 
-1. Abre **Plex Filas** desde la lista de apps.
+1. Abre **Plex Activity Tracker** desde la lista de apps.
 2. **Vincular con mi cuenta Plex**: aparece un código; introdúcelo en plex.tv/link desde el móvil. La app busca el servidor en la LAN, guarda URL y token y crea las filas.
    - Alternativa manual: rellena *URL del servidor* (`http://IP_DEL_NAS:32400`) y *Token*.
 3. Elige qué filas quieres y pulsa **Actualizar ahora**.
 
 ## 4. Añadir las filas en Projectivy
 
-En Projectivy crea una categoría nueva de tipo canal/recomendaciones de una app, elige **Plex Filas** y la fila que quieras (una categoría por fila). Si alguna no aparece, en los ajustes de Plex Filas usa **Hacer visibles las filas**.
+En Projectivy crea una categoría nueva de tipo canal/recomendaciones de una app, elige **Plex Activity Tracker** y la fila que quieras (una categoría por fila). Si alguna no aparece, en los ajustes de Plex Activity Tracker usa **Hacer visibles las filas**.
 
-Para *Continuar viendo* tienes dos opciones: el canal propio o la categoría *Watch Next* filtrada por Plex Filas (esta muestra la barra de progreso).
+Para *Continuar viendo* tienes dos opciones: el canal propio o la categoría *Watch Next* filtrada por Plex Activity Tracker (esta muestra la barra de progreso).
 
-**Fondo (Premium):** *Ajustes de Projectivy → Apariencia → Fondo de pantalla → Plex Filas (fanart)*.
+**Fondo (Premium):** *Ajustes de Projectivy → Apariencia → Fondo de pantalla → Plex Activity Tracker (fanart)*.
 
 ## Al pulsar una tarjeta
 
-La app abre Plex mediante enlaces `plex://play` / `plex://preplay`. Plex no documenta estos enlaces en Android, así que en *Al pulsar una tarjeta* puedes elegir entre reproducir, abrir la ficha o solo abrir la app. Prueba qué funciona en tu tele; el cambio se aplica al momento.
+Plex no documenta sus enlaces en Android TV. Lo que funciona con la app actual de Plex para TV es `plex://watch/video?uri=server://<servidor>/com.plexapp.plugins.library/library/metadata/<id>`, enviado a su actividad de inicio. Ese enlace:
+
+- Reproduce películas y episodios; si estaban empezados, **reanuda donde los dejaste** (parámetro `&offset=<segundos>`; la posición se pide a tu servidor al pulsar la tarjeta y, si no responde, se usa la de la última sincronización). Series y temporadas solo abren Plex: no hay enlace que lleve a su ficha.
+- Falla si Plex estaba cerrado, porque aún no ha encontrado el servidor. Por eso la app abre primero Plex y envía el enlace tras unos segundos (*Esperar a que Plex arranque*, por defecto 5 s). Si dejas Plex siempre abierto puedes ponerlo en *Sin espera*.
+
+En *Al pulsar una tarjeta* puedes elegir, para cada tipo de fila, entre reproducir o solo abrir la app.
 
 ## Notas
 

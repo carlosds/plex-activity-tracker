@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Plex Filas</string>
-    <string name="plugin_name">Plex Filas (fanart)</string>
+    <string name="app_name">Plex Activity Tracker</string>
+    <string name="plugin_name">Plex Activity Tracker (fanart)</string>
     <!-- UUID del plugin para Projectivy: no cambiar una vez instalado -->
     <string name="plugin_uuid" translatable="false">61195904-9eb8-4876-958a-d069537811db</string>
 
@@ -10,7 +10,7 @@
     <string name="row_shows">Series recientes</string>
     <string name="row_reco">Recomendado en Plex</string>
 
-    <string name="settings_title">Plex Filas</string>
+    <string name="settings_title">Plex Activity Tracker</string>
     <string name="cat_server">Servidor Plex</string>
     <string name="link_title">Vincular con mi cuenta Plex</string>
     <string name="link_summary">Muestra un código para introducir en plex.tv/link y busca tu servidor en casa</string>
@@ -24,12 +24,14 @@
     <string name="watch_next_title">Publicar también en Watch Next</string>
     <string name="watch_next_summary">La fila de sistema \"Continuar viendo\", con barra de progreso</string>
     <string name="items_title">Elementos por fila</string>
+    <string name="card_image_title">Imagen de las tarjetas (excepto Continuar viendo)</string>
     <string name="visible_title">Hacer visibles las filas</string>
     <string name="visible_summary">Úsalo si Projectivy no te ofrece alguna fila</string>
 
     <string name="cat_open">Al pulsar una tarjeta</string>
     <string name="open_continue_title">En \"Continuar viendo\"</string>
     <string name="open_other_title">En el resto de filas</string>
+    <string name="plex_delay_title">Esperar a que Plex arranque antes de reproducir</string>
 
     <string name="cat_update">Actualización</string>
     <string name="interval_title">Actualizar cada</string>

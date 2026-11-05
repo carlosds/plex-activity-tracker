@@ -1,4 +1,4 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
 import android.content.ActivityNotFoundException
 import android.content.Intent

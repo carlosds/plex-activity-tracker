@@ -1,4 +1,4 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -41,8 +41,12 @@ class Prefs(context: Context) {
     val rowReco get() = sp.getBoolean(K_ROW_RECO, true)
     val watchNext get() = sp.getBoolean(K_WATCH_NEXT, true)
     val itemsPerRow get() = (sp.getString(K_ITEMS, "20") ?: "20").toIntOrNull() ?: 20
-    val openContinue get() = sp.getString(K_OPEN_CONTINUE, "play") ?: "play"
-    val openOther get() = sp.getString(K_OPEN_OTHER, "preplay") ?: "preplay"
+    val cardImage get() = sp.getString(K_CARD_IMAGE, "poster") ?: "poster"
+    // "preplay" (abrir la ficha) ya no existe: Plex para TV no admite ese enlace. Se trata como "play".
+    val openContinue get() = openMode(K_OPEN_CONTINUE)
+    val openOther get() = openMode(K_OPEN_OTHER)
+    private fun openMode(k: String) = if (sp.getString(k, "play") == "app") "app" else "play"
+    val plexDelaySeconds get() = (sp.getString(K_PLEX_DELAY, "5") ?: "5").toIntOrNull() ?: 5
     val intervalMinutes get() = (sp.getString(K_INTERVAL, "15") ?: "15").toLongOrNull() ?: 15L
     val wallpaperOnFocus get() = sp.getBoolean(K_WP_FOCUS, true)
     val wallpaperSource get() = sp.getString(K_WP_SOURCE, "all") ?: "all"
@@ -80,18 +84,20 @@ class Prefs(context: Context) {
         const val K_ROW_RECO = "row_reco"
         const val K_WATCH_NEXT = "watch_next"
         const val K_ITEMS = "items_per_row"
+        const val K_CARD_IMAGE = "card_image"
         const val K_OPEN_CONTINUE = "open_continue"
         const val K_OPEN_OTHER = "open_other"
+        const val K_PLEX_DELAY = "plex_delay"
         const val K_INTERVAL = "interval"
         const val K_WP_FOCUS = "wp_focus"
         const val K_WP_SOURCE = "wp_source"
 
         /** Ajustes que, al cambiar, piden repintar las filas. */
-        val ROW_KEYS = setOf(K_ROW_CONTINUE, K_ROW_MOVIES, K_ROW_SHOWS, K_ROW_RECO, K_WATCH_NEXT, K_ITEMS, K_URL, K_TOKEN)
+        val ROW_KEYS = setOf(K_ROW_CONTINUE, K_ROW_MOVIES, K_ROW_SHOWS, K_ROW_RECO, K_WATCH_NEXT, K_ITEMS, K_CARD_IMAGE, K_URL, K_TOKEN)
 
         private val EXPORTABLE = listOf(
-            K_URL, K_ROW_CONTINUE, K_ROW_MOVIES, K_ROW_SHOWS, K_ROW_RECO, K_WATCH_NEXT, K_ITEMS,
-            K_OPEN_CONTINUE, K_OPEN_OTHER, K_INTERVAL, K_WP_FOCUS, K_WP_SOURCE
+            K_URL, K_ROW_CONTINUE, K_ROW_MOVIES, K_ROW_SHOWS, K_ROW_RECO, K_WATCH_NEXT, K_ITEMS, K_CARD_IMAGE,
+            K_OPEN_CONTINUE, K_OPEN_OTHER, K_PLEX_DELAY, K_INTERVAL, K_WP_FOCUS, K_WP_SOURCE
         )
 
         fun normalizeUrl(raw: String): String {

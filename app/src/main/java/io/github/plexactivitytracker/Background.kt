@@ -1,4 +1,4 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
 import android.app.Application
 import android.content.BroadcastReceiver
@@ -23,8 +23,8 @@ class App : Application() {
 }
 
 object Scheduler {
-    private const val PERIODIC = "plexfilas-periodic"
-    private const val NOW = "plexfilas-now"
+    private const val PERIODIC = "plexactivitytracker-periodic"
+    private const val NOW = "plexactivitytracker-now"
 
     private val constraints = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 

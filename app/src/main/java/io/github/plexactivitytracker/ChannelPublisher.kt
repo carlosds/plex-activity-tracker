@@ -1,11 +1,14 @@
-package io.github.plexfilas
+package io.github.plexactivitytracker
 
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import android.net.Uri
 import android.provider.BaseColumns
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.tvprovider.media.tv.ChannelLogoUtils
 import androidx.tvprovider.media.tv.PreviewChannel
 import androidx.tvprovider.media.tv.PreviewChannelHelper
 import androidx.tvprovider.media.tv.PreviewProgram
@@ -31,30 +34,80 @@ data class Row(val id: String, val title: String, val enabled: Boolean, val item
 class ChannelPublisher(private val context: Context, private val client: PlexClient) {
 
     private val helper = PreviewChannelHelper(context)
+    private val prefs = Prefs(context)
 
-    private fun channels(): List<PreviewChannel> = runCatching { helper.allChannels }.getOrDefault(emptyList())
+    /** Canales de esta app (id + id interno), leídos directamente del TvProvider. */
+    private class Own(val id: Long, val providerId: String?)
+
+    private fun ownChannels(): List<Own> {
+        val out = mutableListOf<Own>()
+        try {
+            context.contentResolver.query(
+                TvContractCompat.Channels.CONTENT_URI,
+                arrayOf(BaseColumns._ID, TvContractCompat.Channels.COLUMN_INTERNAL_PROVIDER_ID),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext()) out += Own(c.getLong(0), c.getString(1))
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "no pude listar los canales", e)
+        }
+        return out
+    }
 
     fun publishRow(row: Row) {
-        val existing = channels()
-        val current = existing.firstOrNull { it.internalProviderId == row.id }
-        val channelId = current?.id ?: createChannel(row, makeDefault = existing.isEmpty())
-        if (current != null && current.displayName?.toString() != row.title) {
-            runCatching { helper.updatePreviewChannel(channelId, buildChannel(row)) }
+        val all = ownChannels()
+        // Si por algún motivo hay varios canales de la misma fila (versiones anteriores creaban uno
+        // nuevo en cada sincronización), se conserva el más antiguo —el que ya tendrás elegido en
+        // Projectivy— y se borran los demás.
+        val mine = all.filter { it.providerId == row.id }.sortedBy { it.id }
+        mine.drop(1).forEach { dup ->
+            runCatching { helper.deletePreviewChannel(dup.id) }
+                .onFailure { Log.w(TAG, "borrado de canal duplicado ${dup.id} falló", it) }
         }
+        val current = mine.firstOrNull()
+        val channelId = current?.id ?: createChannel(row, makeDefault = all.isEmpty())
+        if (current != null) {
+            // Siempre: nombre, enlace y logo (el logo solo se guarda al crear el canal, así que
+            // sin esto un canal ya existente se quedaría con el icono antiguo).
+            // No usamos helper.updatePreviewChannel: lanza NullPointerException con los canales
+            // creados sin descripción. Actualizamos las columnas directamente.
+            runCatching {
+                val values = ContentValues().apply {
+                    put(TvContractCompat.Channels.COLUMN_DISPLAY_NAME, row.title)
+                    put(TvContractCompat.Channels.COLUMN_DESCRIPTION, row.title)
+                    put(TvContractCompat.Channels.COLUMN_APP_LINK_INTENT_URI, SETTINGS_LINK)
+                }
+                context.contentResolver.update(TvContractCompat.buildChannelUri(channelId), values, null, null)
+            }.onFailure { Log.w(TAG, "actualizar canal ${row.id} falló", it) }
+            runCatching { ChannelLogoUtils.storeChannelLogo(context, channelId, logo()) }
+                .onSuccess { if (!it) Log.w(TAG, "storeChannelLogo(${row.id}) devolvió false") }
+                .onFailure { Log.w(TAG, "storeChannelLogo(${row.id}) falló", it) }
+        }
+        var deleted = 0
         deletePrograms(TvContractCompat.buildPreviewProgramsUriForChannel(channelId)) { id ->
             helper.deletePreviewProgram(id)
+            deleted++
         }
+        var published = 0
         val total = row.items.size
         row.items.forEachIndexed { index, item ->
             val b = PreviewProgram.Builder()
             b.setChannelId(channelId)
             fill(b, item, row.isContinue, weight = total - index)
             runCatching { helper.publishPreviewProgram(b.build()) }
+                .onSuccess { published++ }
+                .onFailure { Log.w(TAG, "publishPreviewProgram(${row.id}, ${item.ratingKey}) falló", it) }
         }
+        Log.i(
+            TAG,
+            "fila ${row.id}: canal=$channelId ${if (current == null) "NUEVO" else "existente"} " +
+                "duplicados=${(mine.size - 1).coerceAtLeast(0)} borrados=$deleted publicados=$published/$total"
+        )
     }
 
     fun removeRow(rowId: String) {
-        channels().filter { it.internalProviderId == rowId }.forEach {
+        ownChannels().filter { it.providerId == rowId }.forEach {
             runCatching { helper.deletePreviewChannel(it.id) }
         }
     }
@@ -80,7 +133,19 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     }
 
     /** Peticiones de visibilidad para launchers que solo muestran canales "browsable". */
-    fun nonBrowsableChannelIds(): List<Long> = channels().filter { !it.isBrowsable }.map { it.id }
+    fun nonBrowsableChannelIds(): List<Long> {
+        val out = mutableListOf<Long>()
+        runCatching {
+            context.contentResolver.query(
+                TvContractCompat.Channels.CONTENT_URI,
+                arrayOf(BaseColumns._ID, "browsable", TvContractCompat.Channels.COLUMN_INTERNAL_PROVIDER_ID),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext()) if (c.getInt(1) == 0 && c.getString(2) != null) out += c.getLong(0)
+            }
+        }.onFailure { Log.w(TAG, "no pude leer la visibilidad de los canales", it) }
+        return out
+    }
 
     private fun createChannel(row: Row, makeDefault: Boolean): Long {
         val ch = buildChannel(row)
@@ -90,7 +155,8 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     private fun buildChannel(row: Row): PreviewChannel =
         PreviewChannel.Builder()
             .setDisplayName(row.title)
-            .setAppLinkIntentUri(Uri.parse("plexfilas://settings"))
+            .setDescription(row.title)
+            .setAppLinkIntentUri(Uri.parse(SETTINGS_LINK))
             .setInternalProviderId(row.id)
             .setLogo(logo())
             .build()
@@ -105,7 +171,7 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
                 while (c.moveToNext()) ids += c.getLong(0)
             }
         }
-        ids.forEach { runCatching { delete(it) } }
+        ids.forEach { runCatching { delete(it) }.onFailure { e -> Log.w(TAG, "borrado de programa $it falló", e) } }
     }
 
     /** Valores comunes de una tarjeta (los builders de canal y de Watch Next no comparten tipo público). */
@@ -117,7 +183,12 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     )
 
     private fun card(item: PlexItem, continueRow: Boolean): Card {
-        val desc = listOfNotNull(item.cardSubtitle, item.summary).joinToString("\n").ifBlank { null }
+        // "Continuar viendo": solo título y duración (sin año ni descripción).
+        // Resto de filas: el año va solo en releaseDate (el launcher ya lo muestra) y no en la descripción.
+        val desc = if (continueRow) null
+        else listOfNotNull(item.cardSubtitle, item.summary).joinToString("\n").ifBlank { null }
+        // En filas normales se puede elegir carátula (vertical) o fanart (horizontal).
+        val posterOnly = !continueRow && prefs.cardImage == "poster"
         return Card(
             type = when (item.type) {
                 "movie" -> TvContractCompat.PreviewProgramColumns.TYPE_MOVIE
@@ -130,9 +201,9 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
             episodeTitle = item.title.takeIf { item.type == "episode" },
             season = item.season.takeIf { item.type == "episode" },
             episode = item.episode.takeIf { item.type == "episode" },
-            releaseDate = item.year?.toString(),
+            releaseDate = if (continueRow) null else item.year?.toString(),
             poster = client.imageUrl(item.posterPath, 400, 600)?.let(Uri::parse),
-            thumb = client.imageUrl(item.stillPath, 640, 360)?.let(Uri::parse),
+            thumb = if (posterOnly) null else client.imageUrl(item.stillPath, 640, 360)?.let(Uri::parse),
             durationMs = item.durationMs?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt(),
             positionMs = if (continueRow) item.viewOffsetMs?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt() else null,
             intent = openUri(item, continueRow),
@@ -188,11 +259,19 @@ class ChannelPublisher(private val context: Context, private val client: PlexCli
     }
 
     companion object {
+        private const val TAG = "PlexTracker"
+        private const val SETTINGS_LINK = "plexactivitytracker://settings"
+
         fun openUri(item: PlexItem, continueRow: Boolean): Uri =
-            Uri.parse("plexfilas://open").buildUpon()
+            Uri.parse("plexactivitytracker://open").buildUpon()
                 .appendQueryParameter("key", item.ratingKey)
                 .appendQueryParameter("type", item.type)
                 .appendQueryParameter("row", if (continueRow) "continue" else "other")
+                .apply {
+                    // Posición guardada en Plex (en segundos) para reanudar donde se dejó
+                    val sec = (item.viewOffsetMs ?: 0L) / 1000
+                    if (sec > 0) appendQueryParameter("pos", sec.toString())
+                }
                 .build()
     }
 }

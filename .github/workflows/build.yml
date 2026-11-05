@@ -2,7 +2,7 @@ name: Compilar APK
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
+      # ubuntu-latest ya trae el Android SDK (ANDROID_HOME); setup-android@v3 falla
+      # al intentar instalar el paquete 'tools'. Solo aceptamos las licencias.
+      - name: Aceptar licencias del SDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -28,6 +31,8 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "SIGNING_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin KEYSTORE_BASE64: se firma con la clave de depuración y no se podrá actualizar sobre una versión anterior sin desinstalar."
           fi
 
       - name: Compilar
@@ -41,5 +46,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: plex-filas-apk
+          name: plex-activity-tracker-apk
           path: app/build/outputs/apk/release/*.apk

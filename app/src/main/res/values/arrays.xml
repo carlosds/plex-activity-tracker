@@ -13,15 +13,35 @@
         <item>30</item>
     </string-array>
 
+    <string-array name="card_image_entries">
+        <item>Carátula (vertical)</item>
+        <item>Fanart (horizontal)</item>
+    </string-array>
+    <string-array name="card_image_values">
+        <item>poster</item>
+        <item>fanart</item>
+    </string-array>
+
     <string-array name="open_entries">
-        <item>Reproducir directamente</item>
-        <item>Abrir la ficha en Plex</item>
+        <item>Reproducir (películas y episodios)</item>
         <item>Solo abrir la app de Plex</item>
     </string-array>
     <string-array name="open_values">
         <item>play</item>
-        <item>preplay</item>
         <item>app</item>
+    </string-array>
+
+    <string-array name="plex_delay_entries">
+        <item>Sin espera (Plex siempre abierto)</item>
+        <item>3 segundos</item>
+        <item>5 segundos</item>
+        <item>8 segundos</item>
+    </string-array>
+    <string-array name="plex_delay_values">
+        <item>0</item>
+        <item>3</item>
+        <item>5</item>
+        <item>8</item>
     </string-array>
 
     <string-array name="interval_entries">

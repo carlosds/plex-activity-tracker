@@ -1,20 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Logo de las filas: tres barras (estantería de pósters) sobre fondo oscuro -->
+<!-- Logo de los canales: chevron con fondo TRANSPARENTE. Los launchers (Google TV, Projectivy)
+     usan el logo como máscara: con un fondo opaco se pintaría un bloque sólido de color. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#16181B"
-        android:pathData="M54,0a54,54 0,1 1,0 108a54,54 0,1 1,0 -108z" />
-    <path
-        android:fillColor="#E5A00D"
-        android:pathData="M30,30h48a5,5 0,0 1,5 5v4a5,5 0,0 1,-5 5h-48a5,5 0,0 1,-5 -5v-4a5,5 0,0 1,5 -5z" />
-    <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,50h36a5,5 0,0 1,5 5v4a5,5 0,0 1,-5 5h-36a5,5 0,0 1,-5 -5v-4a5,5 0,0 1,5 -5z" />
-    <path
-        android:fillColor="#9AA0A6"
-        android:pathData="M30,70h24a5,5 0,0 1,5 5v4a5,5 0,0 1,-5 5h-24a5,5 0,0 1,-5 -5v-4a5,5 0,0 1,5 -5z" />
+        android:pathData="M26,18h22l32,36l-32,36h-22l32,-36z" />
 </vector>
